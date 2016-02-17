@@ -34,10 +34,12 @@ Role Variables
 --------------
 
 A Java home with keytool in bin.
+
     java_home: /usr/java/latest.
 
 
 A keystore list. The name is used in the fact file (viz., keystore-{{ item.name}}.fact).
+```
     keystores:
       - name: DemoIdentity
         path: "/u01/app/oracle/middleware/wlserver_10.3/server/lib/DemoIdentity.jks"
@@ -48,6 +50,7 @@ A keystore list. The name is used in the fact file (viz., keystore-{{ item.name}
       - name: cacerts
         path: "/u01/jdk1.7.0_85/jre/lib/security/cacerts"
         storepass: "changeit"
+```
 
 Dependencies
 ------------
