@@ -8,18 +8,22 @@ Installation
 
 A requirements.yml file might have this in it:
 
+```
   - src: https://github.com/staylorx/ansible-role-keystore-facts
     version: master
     name: staylorx.keystore-facts
+```
 
 Alternatively clone the repo into your roles folder which has its own charm. 
 
 Place a .gitmodules file in _your_ git repo with this,
 
+```
   [submodule "roles/staylorx.keystore-facts"]
     path = roles/staylorx.keystore-facts
     url = git@github.com:staylorx/ansible-role-keystore-facts.git
     branch = master
+```
 
 Requirements
 ------------
@@ -30,20 +34,20 @@ Role Variables
 --------------
 
 A Java home with keytool in bin.
-  java_home: /usr/java/latest.
+    java_home: /usr/java/latest.
 
 
 A keystore list. The name is used in the fact file (viz., keystore-{{ item.name}}.fact).
-  keystores:
-    - name: DemoIdentity
-      path: "/u01/app/oracle/middleware/wlserver_10.3/server/lib/DemoIdentity.jks"
-      storepass: "DemoIdentityKeyStorePassPhrase"
-    - name: DemoTrust
-      path: "/u01/app/oracle/middleware/wlserver_10.3/server/lib/DemoTrust.jks"
-      storepass: "DemoTrustKeyStorePassPhrase"
-    - name: cacerts
-      path: "/u01/jdk1.7.0_85/jre/lib/security/cacerts"
-      storepass: "changeit"
+    keystores:
+      - name: DemoIdentity
+        path: "/u01/app/oracle/middleware/wlserver_10.3/server/lib/DemoIdentity.jks"
+        storepass: "DemoIdentityKeyStorePassPhrase"
+      - name: DemoTrust
+        path: "/u01/app/oracle/middleware/wlserver_10.3/server/lib/DemoTrust.jks"
+        storepass: "DemoTrustKeyStorePassPhrase"
+      - name: cacerts
+        path: "/u01/jdk1.7.0_85/jre/lib/security/cacerts"
+        storepass: "changeit"
 
 Dependencies
 ------------
