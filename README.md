@@ -3,6 +3,24 @@ Role Name
 
 This runs the Java keytool against keystores and creates fact files in the /etc/ansible/facts.d folder.
 
+Installation
+------------
+
+A requirements.yml file might have this in it:
+
+  - src: https://github.com/staylorx/ansible-role-keystore-facts
+    version: master
+    name: staylorx.keystore-facts
+
+Alternatively clone the repo into your roles folder which has its own charm. 
+
+Place a .gitmodules file in _your_ git repo with this,
+
+  [submodule "roles/staylorx.keystore-facts"]
+    path = roles/staylorx.keystore-facts
+    url = git@github.com:staylorx/ansible-role-keystore-facts.git
+    branch = master
+
 Requirements
 ------------
 
@@ -39,7 +57,7 @@ Including an example of how to use your role (for instance, with variables passe
 
     - hosts: weblogic
       roles:
-         - { role: staylorx.keystore_facts }
+         - { role: staylorx.keystore-facts }
 
 License
 -------
