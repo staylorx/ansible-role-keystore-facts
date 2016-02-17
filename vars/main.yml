@@ -1,0 +1,4 @@
+---
+# vars file for staylorx.keystore_facts
+
+java_home: /usr/java/latest

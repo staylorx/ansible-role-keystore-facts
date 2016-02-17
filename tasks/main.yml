@@ -1,0 +1,26 @@
+---
+# tasks file for staylorx.keystore_facts
+
+      # name: need an ansible facts folder
+      - file: path="/etc/ansible" state=directory
+      - file: path="/etc/ansible/facts.d" state=directory
+
+      - name: send checkcerts script
+        template: src=templates/checkcerts.sh.j2 dest=/tmp/checkcerts.sh mode=0700
+#
+# run the keytool scripts 
+#
+      - name: check trust certs
+        command: /tmp/checkcerts.sh --keystore "{{ item.path }}" --password "{{ item.storepass }}"
+        with_items: "{{ keystores }}"
+        register: checkcerts
+
+      - copy: content="{{ item.stdout }}" dest="/etc/ansible/facts.d/keystore-{{ item.item.name }}.fact" owner=root group=root
+        with_items: "{{ checkcerts.results }}"
+
+#
+# Cleanup
+#
+      # Remove sent and created files
+      - file: path=/tmp/checkcerts.sh state=absent
+

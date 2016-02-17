@@ -1,0 +1,113 @@
+#!/bin/sh
+ 
+########################################################
+#
+#       Check certificates inside a java keystore
+#
+#  Found art from http://www.davidgouveia.net/2013/07/simple-script-to-check-expiry-dates-on-a-java-keystore-jks-file/
+#
+#  Checks certs and exports as JSON
+#  Steve.Taylor@cu.edu, Feb-2016
+#
+########################################################
+JAVA_HOME={{ java_home }}
+TIMEOUT="timeout --signal=9 5s "
+KEYTOOL="$TIMEOUT $JAVA_HOME/bin/keytool"
+THRESHOLD_IN_DAYS="30"
+KEYSTORE=""
+PASSWORD=""
+RET=0
+ 
+ARGS=`getopt -o "p:k:t:" -l "password:,keystore:,threshold:" -n "$0" -- "$@"`
+ 
+function usage {
+        echo "Usage: $0 --keystore <keystore> [--password <password>] [--threshold <number of days until expiry>]"
+        exit
+}
+ 
+function start {
+        CURRENT=`date +%s`
+
+        THRESHOLD=$(($CURRENT + ($THRESHOLD_IN_DAYS*24*60*60)))
+        if [ $THRESHOLD -le $CURRENT ]; then
+                echo "[ERROR] Invalid date."
+                exit 1
+        fi
+
+        $KEYTOOL -list -v -keystore "$KEYSTORE"  $PASSWORD 2>&1 > /dev/null
+        if [ $? -gt 0 ]; then echo "Error opening the keystore."; exit 1; fi
+
+        ALIAS_COUNT=`$KEYTOOL -list -keystore "$KEYSTORE"  $PASSWORD | grep "Your keystore contains" | awk '{print $4}'`
+        current_count=1
+        echo "{"
+        echo "  \"keystore\": {"
+        echo "  \"path\": \"$KEYSTORE\","
+        echo "  \"as_of_date\": \"`date`\","
+        echo "  \"days_threshold\": \"$THRESHOLD_IN_DAYS\","
+        echo "  \"cert_count\": \"$ALIAS_COUNT\","
+        echo "  \"certs\": ["
+        $KEYTOOL -list -v -keystore "$KEYSTORE"  $PASSWORD | grep Alias | awk '{print $3}' | while read ALIAS
+        do
+                #Iterate through all the certificate aliases
+                UNTIL=`$KEYTOOL -list -v -keystore "$KEYSTORE"  $PASSWORD -alias $ALIAS | grep Valid | perl -ne 'if(/until: (.*?)\n/) { print "$1\n"; }'`
+                MD5=`$KEYTOOL -list -v -keystore "$KEYSTORE"  $PASSWORD -alias $ALIAS | grep -m 1 MD5 | awk '{print $2}'`
+                SHA1=`$KEYTOOL -list -v -keystore "$KEYSTORE"  $PASSWORD -alias $ALIAS | grep -m 1 SHA1 | awk '{print $2}'`
+                ENTRY_TYPE=`$KEYTOOL -list -v -keystore "$KEYSTORE"  $PASSWORD -alias $ALIAS | grep -m 1 "Entry type" | awk '{print $3}'`
+                ALGORITHM=`$KEYTOOL -list -v -keystore "$KEYSTORE"  $PASSWORD -alias $ALIAS | grep -m 1 algorithm | awk '{print $4}'`
+                UNTIL_SECONDS=`date -d "$UNTIL" +%s`
+                REMAINING_DAYS=$(( ($UNTIL_SECONDS -  $(date +%s)) / 60 / 60 / 24 ))
+
+                echo "  {"
+                echo "    \"alias\": \"$ALIAS\","
+                echo "    \"algorithm\": \"$ALGORITHM\","
+                echo "    \"not_after\": \"$UNTIL\","
+                echo "    \"days_remaining\": \"$REMAINING_DAYS\","
+
+                if [ $THRESHOLD -le $UNTIL_SECONDS ]; then
+                        echo "    \"warning\": false,"
+                else
+                        echo "    \"warning\": true,"
+                        RET=1
+                fi
+
+                echo "    \"md5\": \"$MD5\","
+                echo "    \"sha1\": \"$SHA1\","
+                echo "    \"entry_type\": \"$ENTRY_TYPE\""
+                echo "  }"
+
+                #jazzy check for the comma
+                if [ $current_count -ne $ALIAS_COUNT ]; then
+                  echo ","
+                fi
+                ((current_count++))
+        done
+        echo "]}}"
+        exit $RET
+}
+ 
+eval set -- "$ARGS"
+ 
+while true
+do
+        case "$1" in
+                -p|--password)
+                        if [ -n "$2" ]; then PASSWORD=" -storepass $2"; else echo "Invalid password"; exit 1; fi
+                        shift 2;;
+                -k|--keystore)
+                        if [ ! -f "$2" ]; then echo "Keystore not found: $1"; exit 1; else KEYSTORE=$2; fi
+                        shift 2;;
+                -t|--threshold)
+                        if [ -n "$2" ] && [[ $2 =~ ^[0-9]+$ ]]; then THRESHOLD_IN_DAYS=$2; else echo "Invalid threshold"; exit 1; fi
+                        shift 2;;
+                --)
+                        shift
+                        break;;
+        esac
+done
+ 
+if [ -n "$KEYSTORE" ]
+then
+        start
+else
+        usage
+fi
