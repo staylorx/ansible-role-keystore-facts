@@ -11,19 +11,21 @@ The script assumes Java has been installed, specifically the keytool program.
 Role Variables
 --------------
 
-java_home: defaults to /usr/java/latest.
+A Java home with keytool in bin.
+  java_home: /usr/java/latest.
 
 
-keystores:
-  - name: DemoIdentity
-    path: "{{ middleware_home }}/wlserver_10.3/server/lib/DemoIdentity.jks"
-    storepass: "DemoIdentityKeyStorePassPhrase"
-  - name: DemoTrust
-    path: "{{ middleware_home }}/wlserver_10.3/server/lib/DemoTrust.jks"
-    storepass: "DemoTrustKeyStorePassPhrase"
-  - name: cacerts
-    path: "/u01/jdk1.7.0_85/jre/lib/security/cacerts"
-    storepass: "changeit"
+A keystore list. The name is used in the fact file (viz., keystore-{{ item.name}}.fact).
+  keystores:
+    - name: DemoIdentity
+      path: "/u01/app/oracle/middleware/wlserver_10.3/server/lib/DemoIdentity.jks"
+      storepass: "DemoIdentityKeyStorePassPhrase"
+    - name: DemoTrust
+      path: "/u01/app/oracle/middleware/wlserver_10.3/server/lib/DemoTrust.jks"
+      storepass: "DemoTrustKeyStorePassPhrase"
+    - name: cacerts
+      path: "/u01/jdk1.7.0_85/jre/lib/security/cacerts"
+      storepass: "changeit"
 
 Dependencies
 ------------
