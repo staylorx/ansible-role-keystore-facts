@@ -7,10 +7,14 @@
 #  Found art from http://www.davidgouveia.net/2013/07/simple-script-to-check-expiry-dates-on-a-java-keystore-jks-file/
 #
 #  Checks certs and exports as JSON
+#  Works with https://github.com/staylorx/ansible-role-keystore-facts.git
 #  Steve.Taylor@cu.edu, Feb-2016
 #
 ########################################################
 JAVA_HOME={{ java_home }}
+CERT_LOGGER={{ auto_cert_logger }}
+CERT_REMOVE={{ auto_cert_remove }}
+
 TIMEOUT="timeout --signal=9 5s "
 KEYTOOL="$TIMEOUT $JAVA_HOME/bin/keytool"
 THRESHOLD_IN_DAYS="30"
@@ -63,22 +67,35 @@ function start {
                 echo "    \"not_after\": \"$UNTIL\","
                 echo "    \"days_remaining\": \"$REMAINING_DAYS\","
 
-                if [ $THRESHOLD -le $UNTIL_SECONDS ]; then
-                        echo "    \"warning\": false,"
-                else
-                        echo "    \"warning\": true,"
-                        RET=1
-                fi
 
                 echo "    \"md5\": \"$MD5\","
                 echo "    \"sha1\": \"$SHA1\","
-                echo "    \"entry_type\": \"$ENTRY_TYPE\""
+                echo "    \"entry_type\": \"$ENTRY_TYPE\","
+
+                if [ $UNTIL_SECONDS -le $THRESHOLD ]; then
+                    if [ $CERT_LOGGER == 'True' ]; then
+                        logger "Expiring certificate '$ALIAS' expires in $REMAINING_DAYS days from '$KEYSTORE'; expires '$UNTIL'" -p info
+                    fi
+                fi
+
+                # JSON comma alert! This is the last entry so no comma on these.
+                if [ $REMAINING_DAYS -le 0 ]; then
+                    # expired
+                    if [ $CERT_REMOVE == 'True' ]; then
+                       $KEYTOOL -delete -keystore "$KEYSTORE"  $PASSWORD -alias $ALIAS
+                       if [ $CERT_LOGGER == 'True' ]; then
+                           logger "Expired certificate '$ALIAS' removed from '$KEYSTORE'; expired '$UNTIL'" -p info
+                       fi
+                    fi
+                fi
+
                 echo "  }"
 
                 #jazzy check for the comma
                 if [ $current_count -ne $ALIAS_COUNT ]; then
                   echo ","
                 fi
+
                 ((current_count++))
         done
         echo "]}}"

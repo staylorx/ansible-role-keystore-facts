@@ -1,2 +1,6 @@
 ---
 # defaults file for staylorx.keystore_facts
+
+java_home: /usr/java/latest
+auto_cert_remove: false
+auto_cert_logger: true

@@ -2,6 +2,8 @@ Role Name
 =========
 
 This runs the Java keytool against keystores and creates fact files in the /etc/ansible/facts.d folder.
+Will automatically remove expired certs if you like.
+Will log to syslog if you like.
 
 Installation
 ------------
@@ -33,10 +35,17 @@ The script assumes Java has been installed, specifically the keytool program.
 Role Variables
 --------------
 
-A Java home with keytool in bin.
+A Java home with keytool in bin:
 
     java_home: /usr/java/latest.
 
+Automatically remove expired certs:
+
+    auto_cert_remove: false
+
+Log to the system log with 'logger':
+
+    auto_cert_logger: true
 
 A keystore list. The name is used in the fact file (viz., keystore-{{ item.name}}.fact).
 ```
@@ -64,7 +73,8 @@ Including an example of how to use your role (for instance, with variables passe
 
     - hosts: weblogic
       roles:
-         - { role: staylorx.keystore-facts }
+         - role: staylorx.keystore-facts
+           auto_cert_remove: true
 
 License
 -------
