@@ -4,6 +4,9 @@
       # name: need an ansible facts folder
       - file: path="/etc/ansible" state=directory
       - file: path="/etc/ansible/facts.d" state=directory
+      
+      - name: clean keystore- fact files
+        shell: rm -f /etc/ansible/facts.d/keystore-*
 
       - name: send checkcerts script
         template: src=templates/checkcerts.sh.j2 dest=/tmp/checkcerts.sh mode=0700
@@ -21,6 +24,6 @@
 #
 # Cleanup
 #
-      # Remove sent and created files
-      - file: path=/tmp/checkcerts.sh state=absent
+      - name: Remove sent and created files
+        file: path=/tmp/checkcerts.sh state=absent
 
